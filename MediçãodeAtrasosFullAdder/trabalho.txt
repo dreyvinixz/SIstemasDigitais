@@ -1,0 +1,104 @@
+*Somador de 3 bits
+
+* lib usada nas aulas
+.include 32nm_HP.pm
+
+* Fonte de alimentação
+VDD vdd 0 DC 1.0
+
+* Fontes de entrada 
+VX0 X0 0 PULSE(0 1 0 1n 1n 10n 20n)
+VX1 X1 0 PULSE(0 1 0 1n 1n 20n 40n)
+VX2 X2 0 PULSE(0 1 0 1n 1n 40n 80n)
+VY0 Y0 0 PULSE(0 1 5n 1n 1n 10n 20n)
+VY1 Y1 0 PULSE(0 1 5n 1n 1n 20n 40n)
+VY2 Y2 0 PULSE(0 1 5n 1n 1n 40n 80n)
+VC_in C_in_inicial 0 PULSE(0 1 2.5n 1n 1n 5n 10n)
+
+*Sub CIRCUITO XOR
+*********************************************************
+.subckt XOR out in1 in2 vdd gnd
+
+MP1 inv1 in1 vdd vdd pmos W=105n L=32n
+MN1 inv1 in1 gnd gnd nmos W=70n L=32n
+
+MP2 inv2 in2 vdd vdd pmos W=105n L=32n
+MN2 inv2 in2 gnd gnd nmos W=70n L=32n
+
+MP3 t1 in1 vdd vdd pmos W=105n L=32n
+MP4 t1 inv2 vdd vdd pmos W=105n L=32n
+MN3 t1 in1 n1 gnd nmos W=140n L=32n
+MN4 n1 inv2 gnd gnd nmos W=140n L=32n
+
+MP5 t2 inv1 vdd vdd pmos W=105n L=32n
+MP6 t2 in2 vdd vdd pmos W=105n L=32n
+MN5 t2 inv1 n2 gnd nmos W=140n L=32n
+MN6 n2 in2 gnd gnd nmos W=140n L=32n
+
+MP7 out t1 vdd vdd pmos W=105n L=32n
+MP8 out t2 vdd vdd pmos W=105n L=32n
+MN7 out t1 n3 gnd nmos W=140n L=32n
+MN8 n3 t2 gnd gnd nmos W=140n L=32n
+.ends XOR
+
+*Sub CIRCUITO AND
+*********************************************************
+.subckt AND out in1 in2 vdd gnd
+
+MP1 nand_out in1 vdd vdd pmos W=105n L=32n
+MP2 nand_out in2 vdd vdd pmos W=105n L=32n
+MN1 nand_out in1 n1 gnd nmos W=140n L=32n
+MN2 n1 in2 gnd gnd nmos W=140n L=32n
+
+MP3 out nand_out vdd vdd pmos W=105n L=32n
+MN3 out nand_out gnd gnd nmos W=70n L=32n
+.ends AND
+
+*Sub CIRCUITO OR
+*********************************************************
+.subckt OR out in1 in2 vdd gnd
+
+MP1 nor_out in1 n1 vdd pmos W=210n L=32n
+MP2 n1 in2 vdd vdd pmos W=210n L=32n
+MN1 nor_out in1 gnd gnd nmos W=70n L=32n
+MN2 nor_out in2 gnd gnd nmos W=70n L=32n
+
+MP3 out nor_out vdd vdd pmos W=105n L=32n
+MN3 out nor_out gnd gnd nmos W=70n L=32n
+.ends OR
+
+*Sub CIRCUITO FA
+*********************************************************
+.subckt FA a b cin sum cout vdd gnd
+
+* Primeira XOR: Saída x1, Entradas a e b
+Xxorr1 x1 a b vdd gnd XOR
+
+* Segunda XOR: Saída sum, Entradas x1 e cin
+Xxorr2 sum x1 cin vdd gnd XOR
+
+* Primeira AND: Saída y1, Entradas a e b
+Xandr1 y1 a b vdd gnd AND
+
+* Segunda AND: Saída y2, Entradas x1 e cin
+Xandr2 y2 x1 cin vdd gnd AND
+
+* OR: Saída cout, Entradas y1 e y2
+Xorr1 cout y1 y2 vdd gnd OR
+
+.ends FA
+*********************************************************
+
+* cronstruindo os fa 
+X_FA0 X0 Y0 C_in_inicial S0 C1 vdd 0 FA
+X_FA1 X1 Y1 C1 S1 C2 vdd 0 FA
+X_FA2 X2 Y2 C2 S2 C3 vdd 0 FA
+
+
+CL0 S0 0 10fF
+CL1 S1 0 10fF
+CL2 S2 0 10fF
+CL3 C3 0 10fF
+
+.tran 10n 100n
+.end
